@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  backtester-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: backtester-api:latest
+    container_name: backtester-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      # Copy .env.example → .env and fill in your credentials before running
+      - .env
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    volumes:
+      # Mount output directory so charts/journals survive container restarts
+      - ./output:/app/output
+
+volumes:
+  {}

@@ -121,8 +121,8 @@ class InsideCandleRSIStrategy(BaseStrategy):
         df['Inside_Low'] = np.where(df['Inside_Candle'], df[low_col], np.nan)
         
         # Forward fill the inside candle high/low until next inside candle
-        df['Inside_High'] = df['Inside_High'].fillna(method='ffill')
-        df['Inside_Low'] = df['Inside_Low'].fillna(method='ffill')
+        df['Inside_High'] = df['Inside_High'].ffill()
+        df['Inside_Low'] = df['Inside_Low'].ffill()
         
         # Start high/low from the first inside candle
         first_inside = df['Inside_Candle'].idxmax() if df['Inside_Candle'].any() else None

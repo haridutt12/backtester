@@ -2,12 +2,10 @@ from dhanhq import dhanhq
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from config.dhan_config import CLIENT_ID, ACCESS_TOKEN, EXCHANGE_NSE
+from src.config.dhan_config import CLIENT_ID, ACCESS_TOKEN, EXCHANGE_NSE
 import logging
 import inspect
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class DhanDataFetcher:

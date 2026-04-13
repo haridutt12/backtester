@@ -15,8 +15,10 @@ from src.strategies.inside_candle_rsi import InsideCandleRSIStrategy
 from src.backtester.backtester import Backtester
 from src.config.config_manager import ConfigManager
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Configure logging – level controlled by LOG_LEVEL env var (default INFO)
+_log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(level=getattr(logging, _log_level, logging.INFO),
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Configuration from environment variables with defaults
@@ -26,6 +28,9 @@ STRATEGY_NAME = os.environ.get('STRATEGY_NAME', STRATEGY_TYPE)   # The specific 
 
 # Other common parameters
 BACKTEST_DAYS = int(os.environ.get('BACKTEST_DAYS', 365))
+SYMBOL = os.environ.get('SYMBOL', 'RELIANCE')
+INITIAL_CAPITAL = float(os.environ.get('INITIAL_CAPITAL', 100000))
+COMMISSION = float(os.environ.get('COMMISSION', 0.001))
 
 # The parameters below are kept for backward compatibility but will be overridden 
 # by the configuration file if a strategy is specified
@@ -532,8 +537,8 @@ def main():
     logger.info(f"Fetching data for date range: {start_date.date()} to {end_date.date()}")
     logger.info(f"Using {BACKTEST_DAYS} days of historical data")
 
-    # Fetch historical data for RELIANCE
-    symbol = "RELIANCE"
+    # Fetch historical data for configured symbol
+    symbol = SYMBOL
     logger.info(f"Fetching data for symbol: {symbol}")
     
     historical_data = data_fetcher.get_historical_data(symbol, start_date, end_date)
@@ -558,8 +563,8 @@ def main():
         'symbol': symbol,
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
-        'initial_capital': 100000,
-        'commission': 0.001
+        'initial_capital': INITIAL_CAPITAL,
+        'commission': COMMISSION
     }
     
     if STRATEGY_TYPE == 'MA_CROSSOVER':

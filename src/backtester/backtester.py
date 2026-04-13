@@ -377,7 +377,7 @@ class Backtester:
         portfolio_df.iloc[0, portfolio_df.columns.get_loc('Portfolio_Value')] = self.initial_capital
         
         # Forward fill any missing values
-        portfolio_df = portfolio_df.fillna(method='ffill')
+        portfolio_df = portfolio_df.ffill()
         
         # Calculate metrics
         initial_value = portfolio_df['Portfolio_Value'].iloc[0]
