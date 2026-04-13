@@ -1,0 +1,98 @@
+name: Live Demo
+
+# Triggered by pushing to any demo/** branch.
+# Starts the FastAPI server + a Cloudflare quick-tunnel, writes the
+# public URL back to the repo so it can be read programmatically.
+on:
+  push:
+    branches: ["demo/**"]
+
+jobs:
+  serve:
+    name: Start live demo server
+    runs-on: ubuntu-latest
+    timeout-minutes: 350   # keep tunnel alive ~6 h
+
+    permissions:
+      contents: write      # needed to push the URL file back
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start API server (demo mode – no real Dhan credentials)
+        env:
+          # Non-empty so the server boots; /backtest will return 503
+          # explaining that real credentials are needed
+          DHAN_CLIENT_ID: "DEMO_MODE"
+          DHAN_ACCESS_TOKEN: "DEMO_MODE"
+          LOG_LEVEL: "INFO"
+        run: |
+          uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
+          # Wait until the server responds
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:8000/health && break || sleep 2
+          done
+
+      - name: Download cloudflared and open quick-tunnel
+        run: |
+          curl -sL \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+            -o /usr/local/bin/cloudflared
+          chmod +x /usr/local/bin/cloudflared
+
+          # Start tunnel; redirect logs so we can grep the URL
+          cloudflared tunnel --url http://localhost:8000 --no-autoupdate \
+            > /tmp/cf.log 2>&1 &
+
+          echo "Waiting for Cloudflare tunnel URL..."
+          for i in $(seq 1 40); do
+            URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cf.log 2>/dev/null | tail -1)
+            if [ -n "$URL" ]; then
+              echo "TUNNEL_URL=$URL" >> "$GITHUB_ENV"
+              echo "Live URL: $URL"
+              break
+            fi
+            sleep 3
+          done
+
+          if [ -z "$URL" ]; then
+            echo "ERROR: tunnel did not start in time" >&2
+            cat /tmp/cf.log >&2
+            exit 1
+          fi
+
+      - name: Publish URL back to the repo
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name  "GitHub Actions"
+
+          cat > deployment-url.txt <<EOF
+          ${{ env.TUNNEL_URL }}
+          EOF
+
+          git add deployment-url.txt
+          git commit -m "chore: live demo URL [skip ci]"
+          git push
+
+      - name: Keep server alive (up to ~6 h)
+        run: |
+          echo "╔══════════════════════════════════════════════════════╗"
+          echo "║  Live demo: ${{ env.TUNNEL_URL }}  ║"
+          echo "╚══════════════════════════════════════════════════════╝"
+          echo ""
+          echo "  GET  ${{ env.TUNNEL_URL }}/health"
+          echo "  GET  ${{ env.TUNNEL_URL }}/strategies"
+          echo "  POST ${{ env.TUNNEL_URL }}/backtest"
+          echo "  Docs ${{ env.TUNNEL_URL }}/docs"
+          sleep 21000   # ~5 h 50 min
