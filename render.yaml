@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: backtester-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: LOG_LEVEL
+        value: INFO
+      - key: SYMBOL
+        value: RELIANCE
+      - key: BACKTEST_DAYS
+        value: "365"
+      - key: INITIAL_CAPITAL
+        value: "100000"
+      - key: COMMISSION
+        value: "0.001"
+      # ── Add these secrets in the Render dashboard ──────────────────────
+      # DHAN_CLIENT_ID   (mark as "Secret" in the Render environment editor)
+      # DHAN_ACCESS_TOKEN (mark as "Secret" in the Render environment editor)
+    healthCheckPath: /health
+    autoDeploy: true

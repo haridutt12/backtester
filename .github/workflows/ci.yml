@@ -1,4 +1,4 @@
-name: CI
+name: CI / CD
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Run tests with coverage
         env:
-          # Dummy credentials so the config module does not raise on import
+          # Dummy credentials – DhanDataFetcher is not instantiated during tests
           DHAN_CLIENT_ID: "ci-dummy-id"
           DHAN_ACCESS_TOKEN: "ci-dummy-token"
         run: |
@@ -58,3 +58,22 @@ jobs:
           tags: backtester-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ─── deploy to Render (main branch only) ────────────────────────────────────
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    needs: [test, docker]
+    # Only deploy when pushing to main and the secret is configured
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Render deploy
+        # Set RENDER_DEPLOY_HOOK_URL in GitHub repo Secrets
+        # (Render → Service → Settings → Deploy Hook → copy URL)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            --fail-with-body
+          echo "Deploy triggered successfully."

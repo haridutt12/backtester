@@ -12,11 +12,7 @@ load_dotenv()
 CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
-if not CLIENT_ID or not ACCESS_TOKEN:
-    raise ValueError(
-        "Please set DHAN_CLIENT_ID and DHAN_ACCESS_TOKEN environment variables. "
-        "Create a .env file with these variables or set them in your environment."
-    )
+# NOTE: credentials validated at runtime by DhanDataFetcher, not at import time
 
 # Market segments
 EXCHANGE_NSE = "NSE_EQ"

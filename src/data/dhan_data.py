@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 class DhanDataFetcher:
     def __init__(self):
         """Initialize Dhan API client"""
+        if not CLIENT_ID or not ACCESS_TOKEN:
+            raise ValueError(
+                "Dhan API credentials are required. "
+                "Set DHAN_CLIENT_ID and DHAN_ACCESS_TOKEN environment variables "
+                "(copy .env.example → .env and fill in your values)."
+            )
         self.dhan = dhanhq(client_id=CLIENT_ID, access_token=ACCESS_TOKEN)
         self._security_map: Dict[str, Any] = {}
         self.security_list = None
