@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Backtester – Algo Trading Dashboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a1f2e,#252d3d);padding:20px 32px;border-bottom:1px solid #2d3748;display:flex;align-items:center;gap:12px}
+  header h1{font-size:1.5rem;font-weight:700;color:#63b3ed}
+  header span{color:#718096;font-size:.9rem}
+  .badge{background:#276749;color:#9ae6b4;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
+  main{max-width:1100px;margin:0 auto;padding:32px 20px;display:grid;grid-template-columns:340px 1fr;gap:24px}
+  @media(max-width:768px){main{grid-template-columns:1fr}}
+  .card{background:#1a1f2e;border:1px solid #2d3748;border-radius:12px;padding:24px}
+  .card h2{font-size:1rem;font-weight:600;color:#90cdf4;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:.82rem;color:#a0aec0;margin-bottom:5px;margin-top:14px;font-weight:500}
+  label:first-of-type{margin-top:0}
+  input,select{width:100%;background:#2d3748;border:1px solid #4a5568;color:#e2e8f0;border-radius:8px;padding:9px 12px;font-size:.9rem;outline:none;transition:border .2s}
+  input:focus,select:focus{border-color:#63b3ed}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button#run{width:100%;margin-top:20px;padding:12px;background:linear-gradient(135deg,#2b6cb0,#2c5282);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+  button#run:hover{opacity:.85}
+  button#run:disabled{opacity:.5;cursor:not-allowed}
+  .spinner{display:none;text-align:center;padding:40px;color:#718096}
+  .spinner.show{display:block}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  @media(max-width:500px){.metrics{grid-template-columns:repeat(2,1fr)}}
+  .metric{background:#252d3d;border-radius:8px;padding:14px;text-align:center}
+  .metric .val{font-size:1.5rem;font-weight:700}
+  .metric .lbl{font-size:.72rem;color:#718096;margin-top:4px}
+  .pos{color:#68d391}.neg{color:#fc8181}.neu{color:#63b3ed}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  th{text-align:left;padding:8px 10px;color:#718096;border-bottom:1px solid #2d3748;font-weight:500}
+  td{padding:8px 10px;border-bottom:1px solid #1a202c}
+  tr:hover td{background:#252d3d}
+  .err{color:#fc8181;background:#2d1515;border:1px solid #742a2a;border-radius:8px;padding:14px;font-size:.88rem}
+  #results{display:none}
+  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  .tag.long{background:#1c4532;color:#68d391}
+  .tag.short{background:#2d1515;color:#fc8181}
+  .pnl-pos{color:#68d391;font-weight:600}
+  .pnl-neg{color:#fc8181;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 Backtester</h1>
+  <span>Algorithmic Trading Dashboard</span>
+  <span class="badge">Yahoo Finance · Free</span>
+</header>
+<main>
+  <!-- LEFT: form -->
+  <div class="card">
+    <h2>⚙️ Configure Backtest</h2>
+
+    <label>Symbol</label>
+    <input id="symbol" value="RELIANCE" placeholder="e.g. RELIANCE, TCS, AAPL"/>
+
+    <label>Strategy</label>
+    <select id="strategy">
+      <option value="MA_CROSSOVER">MA Crossover</option>
+      <option value="INSIDE_CANDLE_RSI">Inside Candle + RSI</option>
+      <option value="INSIDE_CANDLE_RSI_AGGRESSIVE">Inside Candle + RSI (Aggressive)</option>
+    </select>
+
+    <label>Historical Days</label>
+    <select id="days">
+      <option value="90">90 days</option>
+      <option value="180">180 days</option>
+      <option value="365" selected>1 year</option>
+      <option value="730">2 years</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label>Initial Capital (₹)</label>
+        <input id="capital" type="number" value="100000" min="1000"/>
+      </div>
+      <div>
+        <label>Commission %</label>
+        <input id="commission" type="number" value="0.1" step="0.01" min="0"/>
+      </div>
+    </div>
+
+    <button id="run" onclick="runBacktest()">▶ Run Backtest</button>
+    <div style="margin-top:10px;font-size:.75rem;color:#4a5568;text-align:center">
+      NSE tickers auto-resolved · No API key required
+    </div>
+  </div>
+
+  <!-- RIGHT: results -->
+  <div>
+    <div class="spinner" id="spinner">⏳ Fetching data &amp; running backtest…</div>
+    <div class="err" id="err" style="display:none"></div>
+
+    <div id="results">
+      <div class="card" style="margin-bottom:16px">
+        <h2>📊 Performance Summary</h2>
+        <div class="metrics" id="metrics"></div>
+      </div>
+      <div class="card">
+        <h2>📋 Trade Journal</h2>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Type</th><th>Entry</th><th>Entry ₹</th>
+                <th>Exit</th><th>Exit ₹</th><th>PnL ₹</th><th>Return</th><th>Reason</th>
+              </tr>
+            </thead>
+            <tbody id="trades"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+async function runBacktest() {
+  const btn = document.getElementById('run');
+  const spinner = document.getElementById('spinner');
+  const errEl = document.getElementById('err');
+  const results = document.getElementById('results');
+
+  btn.disabled = true;
+  spinner.className = 'spinner show';
+  errEl.style.display = 'none';
+  results.style.display = 'none';
+
+  const commission = parseFloat(document.getElementById('commission').value) / 100;
+
+  const payload = {
+    symbol:         document.getElementById('symbol').value.trim().toUpperCase(),
+    strategy:       document.getElementById('strategy').value,
+    days:           parseInt(document.getElementById('days').value),
+    initial_capital:parseFloat(document.getElementById('capital').value),
+    commission,
+    data_source:    'yfinance'
+  };
+
+  try {
+    const resp = await fetch('/backtest', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data.detail || 'Backtest failed');
+    }
+
+    renderResults(data);
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    spinner.className = 'spinner';
+  }
+}
+
+function fmt(n, dec=2) {
+  return parseFloat(n).toFixed(dec);
+}
+function fmtMoney(n) {
+  return '₹' + parseFloat(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function pctClass(v) { return v >= 0 ? 'pos' : 'neg'; }
+
+function renderResults(d) {
+  const metrics = [
+    {label:'Total Return',     val: fmt(d.total_return_pct)+'%',          cls: pctClass(d.total_return_pct)},
+    {label:'Final Value',      val: fmtMoney(d.final_portfolio_value),     cls: 'neu'},
+    {label:'Sharpe Ratio',     val: fmt(d.sharpe_ratio),                   cls: pctClass(d.sharpe_ratio)},
+    {label:'Max Drawdown',     val: fmt(d.max_drawdown_pct)+'%',           cls: 'neg'},
+    {label:'Win Rate',         val: fmt(d.win_rate_pct)+'%',              cls: pctClass(d.win_rate_pct-50)},
+    {label:'Buy & Hold',       val: fmt(d.buy_hold_return_pct)+'%',        cls: pctClass(d.buy_hold_return_pct)},
+    {label:'Total Trades',     val: d.n_trades,                            cls: 'neu'},
+    {label:'Symbol',           val: d.symbol,                              cls: 'neu'},
+    {label:'Strategy',         val: d.strategy.replace(/_/g,' '),          cls: 'neu'},
+  ];
+
+  document.getElementById('metrics').innerHTML = metrics.map(m =>
+    `<div class="metric"><div class="val ${m.cls}">${m.val}</div><div class="lbl">${m.label}</div></div>`
+  ).join('');
+
+  const tbody = document.getElementById('trades');
+  if (!d.trades.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#718096;padding:20px">No trades executed</td></tr>';
+  } else {
+    tbody.innerHTML = d.trades.map((t,i) => {
+      const pnlCls = t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+      const type = t.position === 1 ? '<span class="tag long">LONG</span>' : '<span class="tag short">SHORT</span>';
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${type}</td>
+        <td>${t.entry_date}</td>
+        <td>₹${fmt(t.entry_price)}</td>
+        <td>${t.exit_date}</td>
+        <td>₹${fmt(t.exit_price)}</td>
+        <td class="${pnlCls}">₹${fmt(t.pnl)}</td>
+        <td class="${pnlCls}">${fmt(t.trade_return)}%</td>
+        <td style="color:#718096">${t.exit_reason}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('results').style.display = 'block';
+}
+</script>
+</body>
+</html>

@@ -18,11 +18,14 @@ POST /backtest             – run a backtest and return metrics + trades
 import logging
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 load_dotenv()
@@ -55,6 +58,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── static UI ─────────────────────────────────────────────────────────────────
+_STATIC_DIR = Path(__file__).parent / "static"
+if _STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    """Serve the web dashboard."""
+    index = _STATIC_DIR / "index.html"
+    if index.is_file():
+        return FileResponse(str(index))
+    return {"message": "Backtester API — visit /docs for the Swagger UI"}
+
 
 # Server-level default data source (overridable per request)
 _DEFAULT_DATA_SOURCE: str = os.environ.get("DATA_SOURCE", "yfinance").lower()
