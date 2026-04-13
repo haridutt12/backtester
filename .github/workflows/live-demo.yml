@@ -30,12 +30,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Start API server (demo mode – no real Dhan credentials)
+      - name: Start API server (yfinance mode – no credentials required)
         env:
-          # Non-empty so the server boots; /backtest will return 503
-          # explaining that real credentials are needed
-          DHAN_CLIENT_ID: "DEMO_MODE"
-          DHAN_ACCESS_TOKEN: "DEMO_MODE"
+          DATA_SOURCE: "yfinance"   # free, no API key needed
+          SYMBOL: "RELIANCE.NS"     # NSE: Reliance Industries
           LOG_LEVEL: "INFO"
         run: |
           uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
