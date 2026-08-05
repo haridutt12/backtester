@@ -5,67 +5,125 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Backtester – Algo Trading Dashboard</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a1f2e,#252d3d);padding:20px 32px;border-bottom:1px solid #2d3748;display:flex;align-items:center;gap:12px}
-  header h1{font-size:1.5rem;font-weight:700;color:#63b3ed}
-  header span{color:#718096;font-size:.9rem}
-  .badge{background:#276749;color:#9ae6b4;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
-  main{max-width:1100px;margin:0 auto;padding:32px 20px;display:grid;grid-template-columns:340px 1fr;gap:24px}
-  @media(max-width:768px){main{grid-template-columns:1fr}}
-  .card{background:#1a1f2e;border:1px solid #2d3748;border-radius:12px;padding:24px}
-  .card h2{font-size:1rem;font-weight:600;color:#90cdf4;margin-bottom:18px;display:flex;align-items:center;gap:8px}
-  label{display:block;font-size:.82rem;color:#a0aec0;margin-bottom:5px;margin-top:14px;font-weight:500}
-  label:first-of-type{margin-top:0}
-  input,select{width:100%;background:#2d3748;border:1px solid #4a5568;color:#e2e8f0;border-radius:8px;padding:9px 12px;font-size:.9rem;outline:none;transition:border .2s}
-  input:focus,select:focus{border-color:#63b3ed}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  button#run{width:100%;margin-top:20px;padding:12px;background:linear-gradient(135deg,#2b6cb0,#2c5282);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s}
-  button#run:hover{opacity:.85}
-  button#run:disabled{opacity:.5;cursor:not-allowed}
-  .spinner{display:none;text-align:center;padding:40px;color:#718096}
-  .spinner.show{display:block}
-  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-  @media(max-width:500px){.metrics{grid-template-columns:repeat(2,1fr)}}
-  .metric{background:#252d3d;border-radius:8px;padding:14px;text-align:center}
-  .metric .val{font-size:1.5rem;font-weight:700}
-  .metric .lbl{font-size:.72rem;color:#718096;margin-top:4px}
-  .pos{color:#68d391}.neg{color:#fc8181}.neu{color:#63b3ed}
-  table{width:100%;border-collapse:collapse;font-size:.82rem}
-  th{text-align:left;padding:8px 10px;color:#718096;border-bottom:1px solid #2d3748;font-weight:500}
-  td{padding:8px 10px;border-bottom:1px solid #1a202c}
-  tr:hover td{background:#252d3d}
-  .err{color:#fc8181;background:#2d1515;border:1px solid #742a2a;border-radius:8px;padding:14px;font-size:.88rem}
-  #results{display:none}
-  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
-  .tag.long{background:#1c4532;color:#68d391}
-  .tag.short{background:#2d1515;color:#fc8181}
-  .pnl-pos{color:#68d391;font-weight:600}
-  .pnl-neg{color:#fc8181;font-weight:600}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+header{background:linear-gradient(135deg,#1a1f2e,#252d3d);padding:16px 28px;border-bottom:1px solid #2d3748;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:1.35rem;font-weight:700;color:#63b3ed;white-space:nowrap}
+header .sub{color:#718096;font-size:.85rem}
+.badge{background:#276749;color:#9ae6b4;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.badge.orange{background:#744210;color:#fbd38d}
+.tabs{display:flex;gap:0;border-bottom:1px solid #2d3748;background:#13171f;padding:0 20px;overflow-x:auto}
+.tab-btn{padding:12px 18px;background:none;border:none;color:#718096;font-size:.87rem;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:#e2e8f0}
+.tab-btn.active{color:#63b3ed;border-bottom-color:#63b3ed}
+.tab-panel{display:none;padding:20px}
+.tab-panel.active{display:block}
+#tab-backtest.active{display:grid;grid-template-columns:330px 1fr;gap:20px}
+@media(max-width:800px){#tab-backtest.active{grid-template-columns:1fr}}
+.card{background:#1a1f2e;border:1px solid #2d3748;border-radius:12px;padding:20px}
+.card h2{font-size:.93rem;font-weight:600;color:#90cdf4;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+label{display:block;font-size:.79rem;color:#a0aec0;margin-bottom:4px;margin-top:11px;font-weight:500}
+label:first-of-type{margin-top:0}
+input,select{width:100%;background:#2d3748;border:1px solid #4a5568;color:#e2e8f0;border-radius:7px;padding:8px 11px;font-size:.87rem;outline:none;transition:border .2s}
+input:focus,select:focus{border-color:#63b3ed}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ac-wrap{position:relative}
+.ac-list{display:none;position:absolute;top:100%;left:0;right:0;background:#2d3748;border:1px solid #4a5568;border-top:none;border-radius:0 0 7px 7px;z-index:100;max-height:200px;overflow-y:auto}
+.ac-item{padding:8px 11px;font-size:.84rem;cursor:pointer;border-bottom:1px solid #1a202c}
+.ac-item:hover,.ac-item:focus{background:#3d4a5c}
+.ac-item .sym{font-weight:600;color:#63b3ed}
+.ac-item .exch{font-size:.71rem;color:#718096;float:right;margin-top:2px}
+.btn-primary{width:100%;margin-top:14px;padding:11px;background:linear-gradient(135deg,#2b6cb0,#2c5282);color:#fff;border:none;border-radius:8px;font-size:.91rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{padding:5px 12px;border-radius:6px;font-size:.77rem;font-weight:600;cursor:pointer;border:none}
+.btn-load{background:#2b6cb0;color:#fff}
+.btn-load:hover{background:#2c5282}
+.spinner{display:none;text-align:center;padding:50px;color:#718096;font-size:.93rem;line-height:1.8}
+.spinner.show{display:block}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:500px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{background:#252d3d;border-radius:8px;padding:12px;text-align:center}
+.metric .val{font-size:1.35rem;font-weight:700}
+.metric .lbl{font-size:.68rem;color:#718096;margin-top:3px}
+.pos{color:#68d391}.neg{color:#fc8181}.neu{color:#63b3ed}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+th{text-align:left;padding:7px 9px;color:#718096;border-bottom:1px solid #2d3748;font-weight:500;white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid #1a202c;white-space:nowrap}
+tr:hover td{background:#252d3d}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:.71rem;font-weight:600}
+.tag.long{background:#1c4532;color:#68d391}
+.tag.short{background:#2d1515;color:#fc8181}
+.pnl-pos{color:#68d391;font-weight:600}
+.pnl-neg{color:#fc8181;font-weight:600}
+.err{color:#fc8181;background:#2d1515;border:1px solid #742a2a;border-radius:8px;padding:12px;font-size:.85rem;margin-bottom:12px}
+#results{display:none}
+.strat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:16px}
+.strat-card{background:#1a1f2e;border:1px solid #2d3748;border-radius:10px;padding:18px}
+.strat-card h3{font-size:.9rem;font-weight:600;color:#e2e8f0;margin-bottom:6px}
+.strat-card p{font-size:.79rem;color:#a0aec0;line-height:1.5;margin-bottom:10px}
+.strat-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.pill{padding:2px 8px;border-radius:999px;font-size:.69rem;font-weight:600}
+.pill.risk-low{background:#1c4532;color:#9ae6b4}
+.pill.risk-med{background:#744210;color:#fbd38d}
+.pill.risk-high{background:#63171b;color:#feb2b2}
+.pill.ind{background:#1a365d;color:#90cdf4}
+.pill.best{background:#322659;color:#d6bcfa}
+.builder-wrap{display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media(max-width:800px){.builder-wrap{grid-template-columns:1fr}}
+.param-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec-title{font-size:.8rem;font-weight:600;color:#63b3ed;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #2d3748}
+.idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.idea-card{background:#1a1f2e;border:1px solid #2d3748;border-radius:10px;padding:18px}
+.idea-card h3{font-size:.9rem;font-weight:600;color:#e2e8f0;margin-bottom:4px}
+.idea-card .sub2{font-size:.74rem;color:#63b3ed;margin-bottom:8px}
+.idea-card p{font-size:.79rem;color:#a0aec0;line-height:1.5;margin-bottom:10px}
+.idea-why{font-size:.77rem;background:#252d3d;border-radius:6px;padding:8px 10px;color:#cbd5e0;line-height:1.5;margin-bottom:12px}
+.idea-why strong{color:#68d391}
 </style>
 </head>
 <body>
+
 <header>
-  <h1>📈 Backtester</h1>
-  <span>Algorithmic Trading Dashboard</span>
+  <h1>&#128200; Backtester</h1>
+  <span class="sub">Algorithmic Trading Platform</span>
   <span class="badge">Yahoo Finance · Free</span>
+  <span class="badge orange">7 Strategies</span>
 </header>
-<main>
-  <!-- LEFT: form -->
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('backtest',this)">&#9889; Quick Backtest</button>
+  <button class="tab-btn" onclick="switchTab('library',this)">&#128218; Strategy Library</button>
+  <button class="tab-btn" onclick="switchTab('builder',this)">&#128295; Custom Builder</button>
+  <button class="tab-btn" onclick="switchTab('ideas',this)">&#128161; Strategy Ideas</button>
+</div>
+
+<!-- TAB 1: QUICK BACKTEST -->
+<div id="tab-backtest" class="tab-panel active">
+
   <div class="card">
-    <h2>⚙️ Configure Backtest</h2>
+    <h2>&#9881;&#65039; Configure</h2>
 
     <label>Symbol</label>
-    <input id="symbol" value="RELIANCE" placeholder="e.g. RELIANCE, TCS, AAPL"/>
+    <div class="ac-wrap">
+      <input id="symbol" value="RELIANCE" placeholder="RELIANCE, TCS, AAPL…"
+             autocomplete="off" oninput="acSearch('symbol','ac1',this.value)" onblur="hideAc('ac1',300)"/>
+      <div class="ac-list" id="ac1"></div>
+    </div>
 
     <label>Strategy</label>
     <select id="strategy">
-      <option value="MA_CROSSOVER">MA Crossover</option>
+      <option value="MA_CROSSOVER">MA Crossover (SMA 20/50)</option>
       <option value="INSIDE_CANDLE_RSI">Inside Candle + RSI</option>
       <option value="INSIDE_CANDLE_RSI_AGGRESSIVE">Inside Candle + RSI (Aggressive)</option>
+      <option value="RSI_MEAN_REVERSION">RSI Mean Reversion</option>
+      <option value="BOLLINGER_MEAN_REVERSION">Bollinger Mean Reversion</option>
+      <option value="MACD_CROSSOVER">MACD Crossover</option>
+      <option value="EMA_TREND">EMA 9/21 Trend</option>
     </select>
 
-    <label>Historical Days</label>
+    <label>Historical Period</label>
     <select id="days">
       <option value="90">90 days</option>
       <option value="180">180 days</option>
@@ -73,143 +131,429 @@
       <option value="730">2 years</option>
     </select>
 
-    <div class="row">
-      <div>
-        <label>Initial Capital (₹)</label>
-        <input id="capital" type="number" value="100000" min="1000"/>
-      </div>
-      <div>
-        <label>Commission %</label>
-        <input id="commission" type="number" value="0.1" step="0.01" min="0"/>
-      </div>
+    <div class="row2">
+      <div><label>Capital (&#8377;)</label><input id="capital" type="number" value="100000" min="1000"/></div>
+      <div><label>Commission %</label><input id="commission" type="number" value="0.1" step="0.01" min="0"/></div>
     </div>
 
-    <button id="run" onclick="runBacktest()">▶ Run Backtest</button>
-    <div style="margin-top:10px;font-size:.75rem;color:#4a5568;text-align:center">
-      NSE tickers auto-resolved · No API key required
-    </div>
+    <button class="btn-primary" id="run-btn" onclick="runBacktest()">&#9654; Run Backtest</button>
+    <div style="margin-top:8px;font-size:.71rem;color:#4a5568;text-align:center">NSE tickers auto-resolved &middot; Cached 1 hr &middot; No API key</div>
   </div>
 
-  <!-- RIGHT: results -->
   <div>
-    <div class="spinner" id="spinner">⏳ Fetching data &amp; running backtest…</div>
+    <div class="spinner" id="spinner">&#9203; Fetching data &amp; running backtest…<br><small style="color:#4a5568">First run may take 5–15 s</small></div>
     <div class="err" id="err" style="display:none"></div>
-
     <div id="results">
-      <div class="card" style="margin-bottom:16px">
-        <h2>📊 Performance Summary</h2>
+      <div class="card" style="margin-bottom:14px">
+        <h2>&#128202; Performance Summary</h2>
         <div class="metrics" id="metrics"></div>
       </div>
       <div class="card">
-        <h2>📋 Trade Journal</h2>
-        <div style="overflow-x:auto">
+        <h2>&#128203; Trade Journal</h2>
+        <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>#</th><th>Type</th><th>Entry</th><th>Entry ₹</th>
-                <th>Exit</th><th>Exit ₹</th><th>PnL ₹</th><th>Return</th><th>Reason</th>
-              </tr>
-            </thead>
+            <thead><tr><th>#</th><th>Type</th><th>Entry</th><th>Entry &#8377;</th><th>Exit</th><th>Exit &#8377;</th><th>PnL &#8377;</th><th>Return</th><th>Reason</th></tr></thead>
             <tbody id="trades"></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
-</main>
+</div>
+
+<!-- TAB 2: STRATEGY LIBRARY -->
+<div id="tab-library" class="tab-panel">
+  <div id="lib-loading" style="text-align:center;padding:40px;color:#718096">Loading strategies…</div>
+  <div class="strat-grid" id="lib-grid" style="display:none"></div>
+</div>
+
+<!-- TAB 3: CUSTOM BUILDER -->
+<div id="tab-builder" class="tab-panel">
+  <div class="builder-wrap">
+
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h2>&#127919; Entry Signal</h2>
+        <label>Primary Indicator</label>
+        <select id="cb-entry" onchange="updateEP()">
+          <option value="RSI">RSI — Oversold / Overbought</option>
+          <option value="MA_CROSSOVER">Moving Average Crossover</option>
+          <option value="EMA_CROSSOVER">EMA Crossover (fast/slow)</option>
+          <option value="MACD">MACD Signal Line Cross</option>
+          <option value="BOLLINGER">Bollinger Band</option>
+        </select>
+
+        <div id="ep-RSI">
+          <div class="param-row">
+            <div><label>RSI Period</label><input type="number" id="ep-rsi-p" value="14" min="2"/></div>
+            <div><label>Oversold &lt;</label><input type="number" id="ep-rsi-os" value="30" min="1" max="49"/></div>
+          </div>
+          <div class="param-row">
+            <div><label>Overbought &gt;</label><input type="number" id="ep-rsi-ob" value="70" min="51" max="99"/></div>
+            <div><label>Warmup Bars</label><input type="number" id="ep-rsi-wu" value="20" min="1"/></div>
+          </div>
+        </div>
+        <div id="ep-MA_CROSSOVER" style="display:none">
+          <div class="param-row">
+            <div><label>Short MA</label><input type="number" id="ep-ma-s" value="20" min="2"/></div>
+            <div><label>Long MA</label><input type="number" id="ep-ma-l" value="50" min="3"/></div>
+          </div>
+        </div>
+        <div id="ep-EMA_CROSSOVER" style="display:none">
+          <div class="param-row">
+            <div><label>Fast EMA</label><input type="number" id="ep-ema-f" value="9" min="2"/></div>
+            <div><label>Slow EMA</label><input type="number" id="ep-ema-s" value="21" min="3"/></div>
+          </div>
+        </div>
+        <div id="ep-MACD" style="display:none">
+          <div class="param-row">
+            <div><label>Fast</label><input type="number" id="ep-macd-f" value="12" min="2"/></div>
+            <div><label>Slow</label><input type="number" id="ep-macd-s" value="26" min="3"/></div>
+          </div>
+          <div><label>Signal</label><input type="number" id="ep-macd-sig" value="9" min="2"/></div>
+        </div>
+        <div id="ep-BOLLINGER" style="display:none">
+          <div class="param-row">
+            <div><label>Period</label><input type="number" id="ep-bb-p" value="20" min="5"/></div>
+            <div><label>Std Dev</label><input type="number" id="ep-bb-std" value="2" step="0.1" min="0.5"/></div>
+          </div>
+          <label>Mode</label>
+          <select id="ep-bb-mode">
+            <option value="mean_reversion">Mean Reversion (buy lower band)</option>
+            <option value="breakout">Breakout (buy upper band break)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h2>&#128269; Filter (optional)</h2>
+        <label>Confirmation Signal</label>
+        <select id="cb-filter" onchange="updateFP()">
+          <option value="">None — trade all signals</option>
+          <option value="RSI_TREND">RSI Trend Filter</option>
+          <option value="MA_TREND">MA Trend Filter</option>
+        </select>
+        <div id="fp-RSI_TREND" style="display:none">
+          <div class="param-row">
+            <div><label>RSI Period</label><input type="number" id="fp-rsi-p" value="14" min="2"/></div>
+            <div><label>Threshold</label><input type="number" id="fp-rsi-t" value="50" min="30" max="70"/></div>
+          </div>
+          <div style="font-size:.73rem;color:#718096;margin-top:6px">Long only when RSI &gt; threshold; short only when RSI &lt; (100-threshold)</div>
+        </div>
+        <div id="fp-MA_TREND" style="display:none">
+          <div><label>MA Period</label><input type="number" id="fp-ma-p" value="50" min="5"/></div>
+          <div style="font-size:.73rem;color:#718096;margin-top:6px">Long only when price &gt; MA; short only when price &lt; MA</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h2>&#128737;&#65039; Risk Management</h2>
+        <div class="param-row">
+          <div><label>Stop Loss %</label><input type="number" id="cb-sl" placeholder="e.g. 2" step="0.1" min="0"/></div>
+          <div><label>Take Profit %</label><input type="number" id="cb-tp" placeholder="e.g. 4" step="0.1" min="0"/></div>
+        </div>
+        <div class="param-row">
+          <div><label>Trailing Stop %</label><input type="number" id="cb-trail" placeholder="e.g. 1.5" step="0.1" min="0"/></div>
+          <div><label>Max Bars</label><input type="number" id="cb-maxbars" placeholder="e.g. 20" min="1"/></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>&#128204; Instrument</h2>
+        <label>Symbol</label>
+        <div class="ac-wrap">
+          <input id="cb-symbol" value="RELIANCE" placeholder="RELIANCE, TCS, AAPL…"
+                 autocomplete="off" oninput="acSearch('cb-symbol','ac2',this.value)" onblur="hideAc('ac2',300)"/>
+          <div class="ac-list" id="ac2"></div>
+        </div>
+        <div class="row2">
+          <div><label>Period</label>
+            <select id="cb-days">
+              <option value="90">90 days</option>
+              <option value="180">180 days</option>
+              <option value="365" selected>1 year</option>
+              <option value="730">2 years</option>
+            </select>
+          </div>
+          <div><label>Capital (&#8377;)</label><input id="cb-capital" type="number" value="100000" min="1000"/></div>
+        </div>
+        <button class="btn-primary" id="cb-btn" onclick="runCustom()">&#9654; Run Custom Backtest</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="spinner" id="cb-spinner">&#9203; Running custom backtest…<br><small style="color:#4a5568">First run may take 5–15 s</small></div>
+      <div class="err" id="cb-err" style="display:none"></div>
+      <div id="cb-results" style="display:none">
+        <div class="card" style="margin-bottom:14px">
+          <h2 id="cb-title">&#128202; Results</h2>
+          <div class="metrics" id="cb-metrics"></div>
+        </div>
+        <div class="card">
+          <h2>&#128203; Trade Journal</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Type</th><th>Entry</th><th>Entry &#8377;</th><th>Exit</th><th>Exit &#8377;</th><th>PnL &#8377;</th><th>Return</th><th>Reason</th></tr></thead>
+              <tbody id="cb-trades"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TAB 4: STRATEGY IDEAS -->
+<div id="tab-ideas" class="tab-panel">
+  <p style="color:#a0aec0;font-size:.86rem;margin-bottom:16px">Curated ideas — click <strong style="color:#63b3ed">Load in Builder</strong> to customise and backtest instantly.</p>
+  <div class="idea-grid" id="idea-grid"></div>
+</div>
 
 <script>
+// TABS
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'library' && !libLoaded) loadLibrary();
+  if (id === 'ideas' && !ideasLoaded) renderIdeas();
+}
+
+// AUTOCOMPLETE
+const acTimers = {};
+function acSearch(inputId, listId, q) {
+  clearTimeout(acTimers[listId]);
+  const list = document.getElementById(listId);
+  if (!q || q.length < 1) { list.style.display='none'; return; }
+  acTimers[listId] = setTimeout(async () => {
+    try {
+      const res = await fetch('/symbols/search?q=' + encodeURIComponent(q));
+      const data = await res.json();
+      const results = data.results || [];
+      if (!results.length) { list.style.display='none'; return; }
+      list.innerHTML = results.map(r =>
+        `<div class="ac-item" onmousedown="pickSym('${inputId}','${listId}','${r.symbol}')">
+          <span class="sym">${r.symbol}</span> ${r.name}<span class="exch">${r.exchange}</span>
+        </div>`).join('');
+      list.style.display = 'block';
+    } catch(e) { list.style.display='none'; }
+  }, 220);
+}
+function pickSym(inputId, listId, sym) {
+  document.getElementById(inputId).value = sym;
+  document.getElementById(listId).style.display = 'none';
+}
+function hideAc(listId, ms) {
+  setTimeout(() => { const el = document.getElementById(listId); if(el) el.style.display='none'; }, ms);
+}
+
+// RESULTS RENDERER
+function renderResults(d, metricsId, tradesId, resultsId) {
+  const p2 = v => parseFloat(v).toFixed(2) + '%';
+  const money = n => '₹' + parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const cls = v => v >= 0 ? 'pos' : 'neg';
+  document.getElementById(metricsId).innerHTML = [
+    {l:'Total Return',  v:p2(d.total_return_pct),        c:cls(d.total_return_pct)},
+    {l:'Final Value',   v:money(d.final_portfolio_value), c:'neu'},
+    {l:'Sharpe Ratio',  v:parseFloat(d.sharpe_ratio).toFixed(2), c:cls(d.sharpe_ratio)},
+    {l:'Max Drawdown',  v:p2(d.max_drawdown_pct),         c:'neg'},
+    {l:'Win Rate',      v:p2(d.win_rate_pct),             c:cls(d.win_rate_pct-50)},
+    {l:'Buy & Hold',    v:p2(d.buy_hold_return_pct),      c:cls(d.buy_hold_return_pct)},
+    {l:'Total Trades',  v:d.n_trades,                     c:'neu'},
+    {l:'Symbol',        v:d.symbol,                       c:'neu'},
+    {l:'Strategy',      v:d.strategy.replace(/_/g,' '),   c:'neu'},
+  ].map(m=>`<div class="metric"><div class="val ${m.c}">${m.v}</div><div class="lbl">${m.l}</div></div>`).join('');
+
+  const tbody = document.getElementById(tradesId);
+  tbody.innerHTML = !d.trades.length
+    ? '<tr><td colspan="9" style="text-align:center;color:#718096;padding:20px">No trades executed</td></tr>'
+    : d.trades.map((t,i)=>{
+        const pc=t.pnl>=0?'pnl-pos':'pnl-neg';
+        const type=t.position===1?'<span class="tag long">LONG</span>':'<span class="tag short">SHORT</span>';
+        return `<tr><td>${i+1}</td><td>${type}</td><td>${t.entry_date}</td><td>₹${parseFloat(t.entry_price).toFixed(2)}</td><td>${t.exit_date}</td><td>₹${parseFloat(t.exit_price).toFixed(2)}</td><td class="${pc}">₹${parseFloat(t.pnl).toFixed(2)}</td><td class="${pc}">${parseFloat(t.trade_return).toFixed(2)}%</td><td style="color:#718096">${t.exit_reason}</td></tr>`;
+      }).join('');
+  document.getElementById(resultsId).style.display = 'block';
+}
+
+// QUICK BACKTEST
 async function runBacktest() {
-  const btn = document.getElementById('run');
-  const spinner = document.getElementById('spinner');
-  const errEl = document.getElementById('err');
-  const results = document.getElementById('results');
-
-  btn.disabled = true;
-  spinner.className = 'spinner show';
-  errEl.style.display = 'none';
-  results.style.display = 'none';
-
-  const commission = parseFloat(document.getElementById('commission').value) / 100;
-
-  const payload = {
-    symbol:         document.getElementById('symbol').value.trim().toUpperCase(),
-    strategy:       document.getElementById('strategy').value,
-    days:           parseInt(document.getElementById('days').value),
-    initial_capital:parseFloat(document.getElementById('capital').value),
-    commission,
-    data_source:    'yfinance'
-  };
-
+  const btn=document.getElementById('run-btn'), sp=document.getElementById('spinner'),
+        err=document.getElementById('err'), res=document.getElementById('results');
+  btn.disabled=true; sp.className='spinner show'; err.style.display='none'; res.style.display='none';
   try {
-    const resp = await fetch('/backtest', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json();
+    const r = await fetch('/backtest', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        symbol:          document.getElementById('symbol').value.trim().toUpperCase(),
+        strategy:        document.getElementById('strategy').value,
+        days:            +document.getElementById('days').value,
+        initial_capital: +document.getElementById('capital').value,
+        commission:      parseFloat(document.getElementById('commission').value)/100,
+        data_source:     'yfinance',
+      })});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail||'Backtest failed');
+    renderResults(d,'metrics','trades','results');
+  } catch(e) { err.textContent='❌ '+e.message; err.style.display='block'; }
+  finally { btn.disabled=false; sp.className='spinner'; }
+}
 
-    if (!resp.ok) {
-      throw new Error(data.detail || 'Backtest failed');
-    }
+// STRATEGY LIBRARY
+let libLoaded=false;
+const RISK_CLS={'Low-Medium':'risk-low','Low':'risk-low','Medium':'risk-med','High':'risk-high'};
+async function loadLibrary() {
+  libLoaded=true;
+  try {
+    const res=await fetch('/strategies'), data=await res.json();
+    document.getElementById('lib-grid').innerHTML = Object.entries(data.strategies).map(([k,s])=>`
+      <div class="strat-card">
+        <h3>${k.replace(/_/g,' ')}</h3>
+        <p>${s.description||''}</p>
+        <div class="strat-meta">
+          <span class="pill ${RISK_CLS[s.risk_level]||'risk-med'}">Risk: ${s.risk_level||'—'}</span>
+          <span class="pill best">✓ ${s.best_for||'—'}</span>
+          ${(s.indicators||[]).map(i=>`<span class="pill ind">${i}</span>`).join('')}
+        </div>
+        <button class="btn-sm btn-load" onclick="loadPreset('${k}')">Load &amp; Run →</button>
+      </div>`).join('');
+    document.getElementById('lib-loading').style.display='none';
+    document.getElementById('lib-grid').style.display='grid';
+  } catch(e) { document.getElementById('lib-loading').textContent='Failed to load.'; }
+}
+function loadPreset(key) {
+  document.getElementById('strategy').value=key;
+  switchTab('backtest', document.querySelectorAll('.tab-btn')[0]);
+}
 
-    renderResults(data);
-  } catch(e) {
-    errEl.textContent = '❌ ' + e.message;
-    errEl.style.display = 'block';
-  } finally {
-    btn.disabled = false;
-    spinner.className = 'spinner';
+// CUSTOM BUILDER
+function updateEP() {
+  const v=document.getElementById('cb-entry').value;
+  ['RSI','MA_CROSSOVER','EMA_CROSSOVER','MACD','BOLLINGER'].forEach(k=>{
+    const el=document.getElementById('ep-'+k); if(el) el.style.display=k===v?'block':'none';
+  });
+}
+function updateFP() {
+  const v=document.getElementById('cb-filter').value;
+  ['RSI_TREND','MA_TREND'].forEach(k=>{
+    const el=document.getElementById('fp-'+k); if(el) el.style.display=k===v?'block':'none';
+  });
+}
+function getEP() {
+  const e=document.getElementById('cb-entry').value;
+  if(e==='RSI') return {period:+document.getElementById('ep-rsi-p').value, oversold:+document.getElementById('ep-rsi-os').value, overbought:+document.getElementById('ep-rsi-ob').value, warmup_period:+document.getElementById('ep-rsi-wu').value};
+  if(e==='MA_CROSSOVER') return {short_window:+document.getElementById('ep-ma-s').value, long_window:+document.getElementById('ep-ma-l').value};
+  if(e==='EMA_CROSSOVER') return {fast_period:+document.getElementById('ep-ema-f').value, slow_period:+document.getElementById('ep-ema-s').value};
+  if(e==='MACD') return {fast_period:+document.getElementById('ep-macd-f').value, slow_period:+document.getElementById('ep-macd-s').value, signal_period:+document.getElementById('ep-macd-sig').value};
+  if(e==='BOLLINGER') return {period:+document.getElementById('ep-bb-p').value, std_dev:+document.getElementById('ep-bb-std').value, mode:document.getElementById('ep-bb-mode').value};
+  return {};
+}
+function getFP() {
+  const f=document.getElementById('cb-filter').value;
+  if(f==='RSI_TREND') return {period:+document.getElementById('fp-rsi-p').value, threshold:+document.getElementById('fp-rsi-t').value};
+  if(f==='MA_TREND') return {period:+document.getElementById('fp-ma-p').value};
+  return {};
+}
+async function runCustom() {
+  const btn=document.getElementById('cb-btn'), sp=document.getElementById('cb-spinner'),
+        err=document.getElementById('cb-err'), res=document.getElementById('cb-results');
+  btn.disabled=true; sp.className='spinner show'; err.style.display='none'; res.style.display='none';
+  const f=document.getElementById('cb-filter').value||null;
+  const sl=document.getElementById('cb-sl').value, tp=document.getElementById('cb-tp').value,
+        trail=document.getElementById('cb-trail').value, mb=document.getElementById('cb-maxbars').value;
+  try {
+    const r=await fetch('/backtest/custom',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        symbol:           document.getElementById('cb-symbol').value.trim().toUpperCase(),
+        days:             +document.getElementById('cb-days').value,
+        initial_capital:  +document.getElementById('cb-capital').value,
+        commission:       0.001, data_source:'yfinance',
+        entry_indicator:  document.getElementById('cb-entry').value,
+        entry_params:     getEP(),
+        filter_indicator: f, filter_params: f?getFP():{},
+        stop_loss_pct:    sl?+sl:null, take_profit_pct:tp?+tp:null,
+        trailing_stop_pct:trail?+trail:null, max_bars:mb?+mb:null,
+      })});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Custom backtest failed');
+    document.getElementById('cb-title').textContent='📊 '+d.strategy+' — Results';
+    renderResults(d,'cb-metrics','cb-trades','cb-results');
+  } catch(e) { err.textContent='❌ '+e.message; err.style.display='block'; }
+  finally { btn.disabled=false; sp.className='spinner'; }
+}
+
+// STRATEGY IDEAS
+let ideasLoaded=false;
+const IDEAS=[
+  {title:'Classic Trend Follower',sub:'MA Crossover + RSI Filter',
+   desc:'Enter the golden cross (SMA 20 > SMA 50) only when RSI confirms momentum above 50. Avoids false breakouts in sideways markets.',
+   why:'<strong>Why it works:</strong> Combines price-based trend + momentum signal. The RSI filter dramatically cuts whipsaw trades.',
+   entry:'MA_CROSSOVER',ep:{short_window:20,long_window:50},filter:'RSI_TREND',fp:{period:14,threshold:50},sl:2.5,tp:6},
+  {title:'RSI Bounce Strategy',sub:'Oversold RSI + MA Trend Guard',
+   desc:'Buy when RSI recovers above 30 AND price is above its 50-day MA (uptrend confirmed). Captures mean-reversion bounces in trending stocks.',
+   why:'<strong>Why it works:</strong> High probability when a stock dips in an established uptrend. MA guard prevents buying falling knives.',
+   entry:'RSI',ep:{period:14,oversold:30,overbought:70},filter:'MA_TREND',fp:{period:50},sl:2,tp:5},
+  {title:'MACD Momentum Play',sub:'Pure momentum — signal line cross',
+   desc:'Trade the MACD histogram flip: buy when it turns positive, sell when negative. Best on daily data for liquid large-caps.',
+   why:'<strong>Why it works:</strong> Captures medium-term momentum with low noise. The zero-cross is a robust and widely-followed signal.',
+   entry:'MACD',ep:{fast_period:12,slow_period:26,signal_period:9},filter:null,fp:{},sl:3,tp:7},
+  {title:'Bollinger Snap-Back',sub:'Mean reversion at band extremes',
+   desc:'Enter long when price pierces the lower Bollinger Band, exit at the upper band. Classic mean-reversion for stable, range-bound instruments.',
+   why:'<strong>Why it works:</strong> Statistically prices revert to the mean after extreme deviations. Best on liquid large-caps.',
+   entry:'BOLLINGER',ep:{period:20,std_dev:2,mode:'mean_reversion'},filter:null,fp:{},sl:3,tp:5},
+  {title:'Fast EMA Scalper',sub:'EMA 9/21 with tight stops',
+   desc:'Fast EMA crossovers (9/21) catch short-term momentum shifts. Tight 1.5% stop + 3% target keeps risk:reward favourable.',
+   why:'<strong>Why it works:</strong> EMA reacts faster than SMA. The 9/21 combo balances speed vs. noise. Tight risk management is the edge.',
+   entry:'EMA_CROSSOVER',ep:{fast_period:9,slow_period:21},filter:null,fp:{},sl:1.5,tp:3},
+  {title:'Trend + MA Guard',sub:'EMA Crossover in confirmed uptrend',
+   desc:'Take EMA 9/21 signals only when price is above the 50-day MA. Filters out trades in choppy, low-momentum environments.',
+   why:'<strong>Why it works:</strong> EMA crossovers are far more reliable when a broader trend exists. The MA guard eliminates most false signals.',
+   entry:'EMA_CROSSOVER',ep:{fast_period:9,slow_period:21},filter:'MA_TREND',fp:{period:50},sl:2,tp:5},
+];
+function renderIdeas() {
+  ideasLoaded=true;
+  document.getElementById('idea-grid').innerHTML=IDEAS.map((idea,i)=>`
+    <div class="idea-card">
+      <h3>${idea.title}</h3>
+      <div class="sub2">${idea.sub}</div>
+      <p>${idea.desc}</p>
+      <div class="idea-why">${idea.why}</div>
+      <button class="btn-sm btn-load" onclick="loadIdea(${i})">Load in Builder →</button>
+    </div>`).join('');
+}
+function loadIdea(i) {
+  const idea=IDEAS[i];
+  switchTab('builder', document.querySelectorAll('.tab-btn')[2]);
+  document.getElementById('cb-entry').value=idea.entry; updateEP();
+  const ep=idea.ep;
+  if(idea.entry==='RSI'){
+    if(ep.period)document.getElementById('ep-rsi-p').value=ep.period;
+    if(ep.oversold)document.getElementById('ep-rsi-os').value=ep.oversold;
+    if(ep.overbought)document.getElementById('ep-rsi-ob').value=ep.overbought;
+  } else if(idea.entry==='MA_CROSSOVER'){
+    if(ep.short_window)document.getElementById('ep-ma-s').value=ep.short_window;
+    if(ep.long_window)document.getElementById('ep-ma-l').value=ep.long_window;
+  } else if(idea.entry==='EMA_CROSSOVER'){
+    if(ep.fast_period)document.getElementById('ep-ema-f').value=ep.fast_period;
+    if(ep.slow_period)document.getElementById('ep-ema-s').value=ep.slow_period;
+  } else if(idea.entry==='MACD'){
+    if(ep.fast_period)document.getElementById('ep-macd-f').value=ep.fast_period;
+    if(ep.slow_period)document.getElementById('ep-macd-s').value=ep.slow_period;
+    if(ep.signal_period)document.getElementById('ep-macd-sig').value=ep.signal_period;
+  } else if(idea.entry==='BOLLINGER'){
+    if(ep.period)document.getElementById('ep-bb-p').value=ep.period;
+    if(ep.std_dev)document.getElementById('ep-bb-std').value=ep.std_dev;
+    if(ep.mode)document.getElementById('ep-bb-mode').value=ep.mode;
   }
-}
-
-function fmt(n, dec=2) {
-  return parseFloat(n).toFixed(dec);
-}
-function fmtMoney(n) {
-  return '₹' + parseFloat(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-function pctClass(v) { return v >= 0 ? 'pos' : 'neg'; }
-
-function renderResults(d) {
-  const metrics = [
-    {label:'Total Return',     val: fmt(d.total_return_pct)+'%',          cls: pctClass(d.total_return_pct)},
-    {label:'Final Value',      val: fmtMoney(d.final_portfolio_value),     cls: 'neu'},
-    {label:'Sharpe Ratio',     val: fmt(d.sharpe_ratio),                   cls: pctClass(d.sharpe_ratio)},
-    {label:'Max Drawdown',     val: fmt(d.max_drawdown_pct)+'%',           cls: 'neg'},
-    {label:'Win Rate',         val: fmt(d.win_rate_pct)+'%',              cls: pctClass(d.win_rate_pct-50)},
-    {label:'Buy & Hold',       val: fmt(d.buy_hold_return_pct)+'%',        cls: pctClass(d.buy_hold_return_pct)},
-    {label:'Total Trades',     val: d.n_trades,                            cls: 'neu'},
-    {label:'Symbol',           val: d.symbol,                              cls: 'neu'},
-    {label:'Strategy',         val: d.strategy.replace(/_/g,' '),          cls: 'neu'},
-  ];
-
-  document.getElementById('metrics').innerHTML = metrics.map(m =>
-    `<div class="metric"><div class="val ${m.cls}">${m.val}</div><div class="lbl">${m.label}</div></div>`
-  ).join('');
-
-  const tbody = document.getElementById('trades');
-  if (!d.trades.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#718096;padding:20px">No trades executed</td></tr>';
-  } else {
-    tbody.innerHTML = d.trades.map((t,i) => {
-      const pnlCls = t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-      const type = t.position === 1 ? '<span class="tag long">LONG</span>' : '<span class="tag short">SHORT</span>';
-      return `<tr>
-        <td>${i+1}</td>
-        <td>${type}</td>
-        <td>${t.entry_date}</td>
-        <td>₹${fmt(t.entry_price)}</td>
-        <td>${t.exit_date}</td>
-        <td>₹${fmt(t.exit_price)}</td>
-        <td class="${pnlCls}">₹${fmt(t.pnl)}</td>
-        <td class="${pnlCls}">${fmt(t.trade_return)}%</td>
-        <td style="color:#718096">${t.exit_reason}</td>
-      </tr>`;
-    }).join('');
+  document.getElementById('cb-filter').value=idea.filter||''; updateFP();
+  if(idea.filter==='RSI_TREND'&&idea.fp){
+    if(idea.fp.period)document.getElementById('fp-rsi-p').value=idea.fp.period;
+    if(idea.fp.threshold)document.getElementById('fp-rsi-t').value=idea.fp.threshold;
+  } else if(idea.filter==='MA_TREND'&&idea.fp){
+    if(idea.fp.period)document.getElementById('fp-ma-p').value=idea.fp.period;
   }
-
-  document.getElementById('results').style.display = 'block';
+  document.getElementById('cb-sl').value=idea.sl||'';
+  document.getElementById('cb-tp').value=idea.tp||'';
 }
 </script>
 </body>

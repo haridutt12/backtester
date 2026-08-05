@@ -1,9 +1,13 @@
 {
   "MA_CROSSOVER": {
+    "strategy_type": "MA_CROSSOVER",
     "short_window": 20,
     "long_window": 50,
     "warmup_period": 15,
-    "description": "Moving Average Crossover Strategy"
+    "description": "Moving Average Crossover — SMA 20/50 golden & death cross",
+    "risk_level": "Medium",
+    "best_for": "Trending markets",
+    "indicators": ["SMA 20", "SMA 50"]
   },
   "INSIDE_CANDLE_RSI": {
     "strategy_type": "INSIDE_CANDLE_RSI",
@@ -15,7 +19,10 @@
     "take_profit_pct": 4.0,
     "trailing_stop_pct": 1.5,
     "max_bars": null,
-    "description": "Inside Candle Breakout with RSI Confirmation Strategy"
+    "description": "Inside Candle Breakout with RSI Confirmation",
+    "risk_level": "Medium",
+    "best_for": "Any market",
+    "indicators": ["RSI 14", "Inside Candle Pattern"]
   },
   "INSIDE_CANDLE_RSI_AGGRESSIVE": {
     "strategy_type": "INSIDE_CANDLE_RSI",
@@ -27,6 +34,61 @@
     "take_profit_pct": 6.0,
     "trailing_stop_pct": 2.0,
     "max_bars": null,
-    "description": "Aggressive Inside Candle Breakout with RSI (Tighter Stops, Higher Profit Target)"
+    "description": "Aggressive IC + RSI — tighter stops, higher profit target",
+    "risk_level": "High",
+    "best_for": "Strong trending markets",
+    "indicators": ["RSI 14", "Inside Candle Pattern"]
+  },
+  "RSI_MEAN_REVERSION": {
+    "strategy_type": "RSI_MEAN_REVERSION",
+    "rsi_period": 14,
+    "rsi_overbought": 70,
+    "rsi_oversold": 30,
+    "warmup_period": 20,
+    "stop_loss_pct": 3.0,
+    "take_profit_pct": 5.0,
+    "description": "RSI Mean Reversion — buy oversold, sell overbought",
+    "risk_level": "Low-Medium",
+    "best_for": "Ranging / sideways markets",
+    "indicators": ["RSI 14"]
+  },
+  "BOLLINGER_MEAN_REVERSION": {
+    "strategy_type": "BOLLINGER_BREAKOUT",
+    "bb_period": 20,
+    "bb_std": 2.0,
+    "warmup_period": 25,
+    "mode": "mean_reversion",
+    "stop_loss_pct": 2.5,
+    "take_profit_pct": 4.0,
+    "description": "Bollinger Band Mean Reversion — snap back from band extremes",
+    "risk_level": "Low-Medium",
+    "best_for": "Ranging / mean-reverting markets",
+    "indicators": ["Bollinger Bands (20, 2)"]
+  },
+  "MACD_CROSSOVER": {
+    "strategy_type": "MACD_CROSSOVER",
+    "fast_period": 12,
+    "slow_period": 26,
+    "signal_period": 9,
+    "warmup_period": 35,
+    "stop_loss_pct": 2.0,
+    "take_profit_pct": 5.0,
+    "description": "MACD Signal Crossover — momentum trend following",
+    "risk_level": "Medium",
+    "best_for": "Trending markets",
+    "indicators": ["MACD (12, 26, 9)"]
+  },
+  "EMA_TREND": {
+    "strategy_type": "EMA_TREND",
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "warmup_period": 25,
+    "stop_loss_pct": 2.0,
+    "take_profit_pct": 4.0,
+    "trailing_stop_pct": 1.5,
+    "description": "EMA 9/21 Trend Following — fast reaction to trend shifts",
+    "risk_level": "Medium",
+    "best_for": "Trending markets",
+    "indicators": ["EMA 9", "EMA 21"]
   }
 }
